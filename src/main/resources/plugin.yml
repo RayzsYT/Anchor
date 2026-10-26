@@ -1,0 +1,11 @@
+author: Rayzs_YT
+
+name: Anchor
+description: Anchor to blocks using your pickaxe.
+
+main: de.rayzs.anchor.AnchorPlugin
+
+version: ${version}
+api-version: 1.13
+
+folia-supported: true

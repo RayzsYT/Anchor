@@ -1,19 +1,17 @@
 package de.rayzs.anchor.listener;
 
 import de.rayzs.anchor.session.AnchorManager;
+import de.rayzs.anchor.session.AnchorSession;
 import de.rayzs.anchor.utils.ExpireCache;
+import de.rayzs.anchor.utils.ExpireList;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
@@ -22,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 public class AnchorListener implements Listener {
 
     private final ExpireCache<Player, BlockFace> playerBlockFaceMap = new ExpireCache<>(250, TimeUnit.MILLISECONDS);
+    private final ExpireList<Player> playerDoubleSneak = new ExpireList<>(250, TimeUnit.MILLISECONDS);
+
     private final AnchorManager manager;
 
     public AnchorListener(final AnchorManager manager) {
@@ -33,8 +33,14 @@ public class AnchorListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         final Player player = event.getPlayer();
-        final BlockFace face = event.getBlockFace();
 
+
+        if (event.getClickedBlock() == null) {
+            return;
+        }
+
+
+        final BlockFace face = event.getBlockFace();
 
         if (player.isOnGround() || player.isFlying()) {
             return;
@@ -64,7 +70,7 @@ public class AnchorListener implements Listener {
 
 
             if (diffX >= 0.05 || diffZ >= 0.05) {
-                manager.remove(player, session -> {});
+                manager.remove(player);
                 return;
             }
         }
@@ -101,7 +107,7 @@ public class AnchorListener implements Listener {
             final Block blockEventMoreBelow = blockBelow.getRelative(BlockFace.DOWN);
 
             if (blockBelow.getType().isSolid() || blockEventMoreBelow.getType().isSolid()) {
-                this.manager.remove(player, session -> {});
+                this.manager.remove(player);
                 return;
             }
         }
@@ -140,33 +146,72 @@ public class AnchorListener implements Listener {
     }
 
     @EventHandler
-    public void onChangeSlot(final PlayerItemHeldEvent event) {
-        this.manager.remove(event.getPlayer(), session -> {});
-    }
-
-    @EventHandler
     public void onSneak(final PlayerToggleSneakEvent event) {
         final Player player = event.getPlayer();
 
-        if (event.isSneaking()) {
-            this.manager.remove(event.getPlayer(), session -> {
-                if (session.getCurrentlyHookedBlock() == null) {
-                    return;
-                }
-
-                final BlockFace hookedBlockFace = session.getHookedBlockFace();
-                final Vector vector = hookedBlockFace.getDirection().multiply(0.8).setY(0.3);
-
-                player.setVelocity(vector);
+        if (!this.manager.hasSession(player)) return;
 
 
-                player.playSound(
-                        player.getLocation(),
-                        Sound.ENTITY_RABBIT_JUMP,
-                        0.6f, 0.2f
-                );
-            });
+        if (!player.isSneaking() && !playerDoubleSneak.contains(player)) {
+            playerDoubleSneak.add(player);
+            return;
         }
+
+
+        if (player.isSneaking()) return;
+
+
+        final AnchorSession session = this.manager.remove(event.getPlayer());
+
+        if (session.getCurrentlyHookedBlock() == null) {
+            return;
+        }
+
+        final Block hookedBlock = session.getCurrentlyHookedBlock();
+        final BlockFace hookedBlockFace = session.getHookedBlockFace();
+        final Vector vector = hookedBlockFace.getDirection().multiply(0.8).setY(0.3);
+
+
+        player.getWorld().playEffect(
+                player.getLocation(),
+                Effect.STEP_SOUND,
+                hookedBlock.getType()
+        );
+
+
+        player.playSound(
+                player.getLocation(),
+                Sound.ENTITY_BAT_TAKEOFF,
+                0.2f, 2
+        );
+
+
+        player.setVelocity(vector);
+    }
+
+    @EventHandler
+    public void onChangeSlot(final PlayerItemHeldEvent event) {
+        this.manager.remove(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onQuit(final PlayerQuitEvent event) {
+        this.manager.remove(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onTeleport(final PlayerTeleportEvent event) {
+        this.manager.remove(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onChangeWorld(final PlayerChangedWorldEvent event) {
+        this.manager.remove(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onSwapItems(final PlayerSwapHandItemsEvent event) {
+        this.manager.remove(event.getPlayer());
     }
 
     private double calcXZDistance(final Location loc1, final Location loc2) {

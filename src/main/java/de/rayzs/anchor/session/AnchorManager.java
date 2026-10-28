@@ -5,7 +5,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 public class AnchorManager {
 
@@ -32,15 +31,18 @@ public class AnchorManager {
         return this.anchors.get(player) != null;
     }
 
-    public void remove(
-            final Player player,
-            final Consumer<AnchorSession> removalCallback
-    ) {
+    public AnchorSession remove(final Player player) {
         final AnchorSession session = this.anchors.remove(player);
 
         if (session != null) {
             session.destroy();
-            removalCallback.accept(session);
         }
+
+        return session;
+    }
+
+    public void destruct() {
+        this.anchors.values().forEach(AnchorSession::destroy);
+        this.anchors.clear();
     }
 }

@@ -2,6 +2,7 @@ package de.rayzs.anchor.listener;
 
 import de.rayzs.anchor.session.AnchorManager;
 import de.rayzs.anchor.session.AnchorSession;
+import de.rayzs.anchor.session.AnchorSettings;
 import de.rayzs.anchor.utils.ExpireCache;
 import de.rayzs.anchor.utils.ExpireList;
 import org.bukkit.*;
@@ -11,10 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
@@ -26,18 +26,17 @@ public class AnchorListener implements Listener {
     private final ExpireList<Player> playerDoubleSneak = new ExpireList<>(250, TimeUnit.MILLISECONDS);
 
 
-    private final NamespacedKey identifierKey = new NamespacedKey("anchor", "identifier");
-    private final NamespacedKey jumpMultiplierKey = new NamespacedKey("anchor", "jump-multiplier");
-
-
     private final AnchorManager manager;
+    private final AnchorSettings settings;
 
 
-    public AnchorListener(final AnchorManager manager) {
+    public AnchorListener(final AnchorManager manager, final AnchorSettings settings) {
         this.manager = manager;
+        this.settings = settings;
     }
 
 
+    // Main events
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -56,7 +55,7 @@ public class AnchorListener implements Listener {
         }
 
 
-        if (event.getItem() == null || !event.getItem().getType().name().contains("PICKAXE")) {
+        if (!this.settings.isValidItem(event.getItem())) {
             return;
         }
 
@@ -98,7 +97,7 @@ public class AnchorListener implements Listener {
 
         {
             final ItemStack holdingItem = player.getInventory().getItemInMainHand();
-            if (!holdingItem.getType().name().contains("PICKAXE")) {
+            if (!this.settings.isValidItem(holdingItem)) {
                 return;
             }
         }
@@ -154,6 +153,8 @@ public class AnchorListener implements Listener {
         this.manager.handle(player, hitBlock, hookedBlockFace);
     }
 
+
+
     @EventHandler
     public void onSneak(final PlayerToggleSneakEvent event) {
         final Player player = event.getPlayer();
@@ -176,9 +177,21 @@ public class AnchorListener implements Listener {
             return;
         }
 
+
+        final ItemStack holdingItem = player.getInventory().getItemInMainHand();
+
+        final float jumpMultiplier = this.settings.readJumpMultiplier(holdingItem);
+        final float jumpHeight = this.settings.readJumpHeight(holdingItem);
+
+
+        if (jumpHeight == -999 || jumpMultiplier == -999) {
+            return;
+        }
+
+
         final Block hookedBlock = session.getCurrentlyHookedBlock();
         final BlockFace hookedBlockFace = session.getHookedBlockFace();
-        final Vector vector = hookedBlockFace.getDirection().multiply(0.8).setY(0.3);
+        final Vector vector = hookedBlockFace.getDirection().multiply(jumpMultiplier).setY(jumpHeight);
 
 
         player.getWorld().playEffect(
@@ -197,6 +210,9 @@ public class AnchorListener implements Listener {
 
         player.setVelocity(vector);
     }
+
+
+    // Session removal events
 
     @EventHandler
     public void onBlockBreak(final BlockBreakEvent event) {
@@ -233,28 +249,11 @@ public class AnchorListener implements Listener {
         this.manager.remove(event.getPlayer());
     }
 
-
-
-    private boolean isValidItem(final ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return false;
-
-        final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.has(identifierKey);
+    @EventHandler
+    public void onPlayerDeath(final PlayerDeathEvent event) {
+        this.manager.remove(event.getPlayer());
     }
 
-    private float readJumpMultiplier(final ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return 0;
-
-        final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.getOrDefault(jumpMultiplierKey, PersistentDataType.FLOAT, 0.8f);
-    }
-
-    private float readJumpHeight(final ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return 0;
-
-        final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.getOrDefault(jumpMultiplierKey, PersistentDataType.FLOAT, 0.3f);
-    }
 
     private double calcXZDistance(final Location loc1, final Location loc2) {
         final double diffX = loc1.getX() - loc2.getX();

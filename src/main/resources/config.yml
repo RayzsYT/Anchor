@@ -1,0 +1,17 @@
+# How pickaxes that can be used for anchoring should be detected.
+# Either by item type, or NamespacedKey.
+# TYPE = By item type
+# KEY = By NamespacedKey
+#
+# Possible NamespacedKeys are:
+#   anchor:identify = For identifying items that can be used for anchoring.
+#   anchor:jump_multiplier = Jump multiplier. Is set to 0.8 by default.
+#   anchor:jump_height = Jump height. Is set to 0.3 by default.
+mode: TYPE
+
+types:
+  - "STONE_PICKAXE"
+  - "GOLDEN_PICKAXE"
+  - "DIAMOND_PICKAXE"
+  - "NETHERITE_PICKAXE"
+  - "IRON_PICKAXE"

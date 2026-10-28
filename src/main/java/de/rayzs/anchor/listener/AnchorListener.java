@@ -204,7 +204,7 @@ public class AnchorListener implements Listener {
         final AnchorSession session = this.manager.getSession(event.getPlayer());
 
         if (session != null && session.getCurrentlyHookedBlock().equals(block)) {
-            event.setCancelled(true);
+            this.manager.destruct();
         }
     }
 

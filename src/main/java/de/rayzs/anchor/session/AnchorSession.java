@@ -1,13 +1,12 @@
 package de.rayzs.anchor.session;
 
 import org.bukkit.Effect;
-import org.bukkit.Sound;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.HashSet;
 
@@ -37,8 +36,6 @@ public class AnchorSession {
                 : 0.08f;
 
         this.sessionGravity = defaultGravity;
-
-        player.setVelocity(new Vector(0, 0, 0));
     }
 
 
@@ -50,33 +47,38 @@ public class AnchorSession {
         }
 
 
-        if (this.currentlyHookedBlock != block && this.sessionGravity != 0) {
+        if ((this.currentlyHookedBlock == null || !this.currentlyHookedBlock.equals(block)) && this.sessionGravity != 0) {
+
             if (this.currentlyHookedBlock != null) {
                 pastBlocks.add(this.currentlyHookedBlock);
             }
 
 
-            this.currentlyHookedBlock = block;
-            final float reduceNum = 0.045f;
+            final float reduceNum = determineHardnessReduction(block.getType());
 
+
+            this.currentlyHookedBlock = block;
             this.sessionGravity = Math.max(0, this.sessionGravity - reduceNum);
+
             attributeInstance.setBaseValue(this.sessionGravity);
 
 
             player.getWorld().playSound(
                     player.getLocation(),
-                    block.getBlockData().getSoundGroup().getHitSound(),
-                    0.6f, 1
+                    block.getBlockData().getSoundGroup().getStepSound(),
+                    0.4f, 1
             );
 
             player.getWorld().playEffect(
-                    block.getLocation(),
+                    player.getLocation(),
                     Effect.STEP_SOUND,
                     block.getType()
             );
+
+            player.setVelocity(player.getVelocity().setY(0));
         }
 
-        player.sendBlockDamage(block.getLocation(), pastBlocks.size() * 0.1f + 0.3f);
+        player.sendBlockDamage(block.getLocation(), Math.min(pastBlocks.size() * 0.1f + 0.3f, 1));
     }
 
 
@@ -101,5 +103,21 @@ public class AnchorSession {
 
     public Player getPlayer() {
         return this.player;
+    }
+
+
+    private float determineHardnessReduction(final Material material) {
+        final float hardness = material.getHardness();
+
+
+        if (hardness == -1 || hardness >= 50) {
+            return 1;
+
+        } else if (hardness > 1 && hardness < 5) {
+            return (float) sessionGravity * 0.4f;
+        }
+
+
+        return (float) sessionGravity * 0.1f;
     }
 }

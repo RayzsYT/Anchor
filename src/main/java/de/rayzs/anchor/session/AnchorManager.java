@@ -31,6 +31,10 @@ public class AnchorManager {
         return this.anchors.get(player) != null;
     }
 
+    public AnchorSession getSession(final Player player) {
+        return this.anchors.get(player);
+    }
+
     public AnchorSession remove(final Player player) {
         final AnchorSession session = this.anchors.remove(player);
 

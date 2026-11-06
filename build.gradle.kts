@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "de.rayzs.anchor"
-version = "1.0.1"
+version = "1.0.2"
 
 tasks.processResources {
     expand("version" to project.version)

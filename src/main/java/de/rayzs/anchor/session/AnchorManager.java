@@ -1,13 +1,16 @@
 package de.rayzs.anchor.session;
 
+import de.rayzs.anchor.utils.ExpireList;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 public class AnchorManager {
 
+    private final ExpireList<Player> reducedFallDamagePlayers = new ExpireList<>(1, TimeUnit.MINUTES);
     private final HashMap<Player, AnchorSession> anchors = new HashMap<>();
 
 
@@ -40,9 +43,18 @@ public class AnchorManager {
 
         if (session != null) {
             session.destroy();
+            reducedFallDamagePlayers.add(player);
         }
 
         return session;
+    }
+
+    public double handleFallDamage(final Player player, final double fallDamage) {
+        if (reducedFallDamagePlayers.remove(player)) {
+            return Math.max(0, fallDamage - (fallDamage * 0.8));
+        }
+
+        return fallDamage;
     }
 
     public void destruct() {

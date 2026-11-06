@@ -114,10 +114,10 @@ public class AnchorSession {
             return 1;
 
         } else if (hardness > 1 && hardness < 5) {
-            return (float) sessionGravity * 0.4f;
+            return (float) sessionGravity * 0.9f;
         }
 
 
-        return (float) sessionGravity * 0.1f;
+        return (float) sessionGravity * 0.4f;
     }
 }

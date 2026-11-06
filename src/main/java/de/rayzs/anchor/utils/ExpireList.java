@@ -25,8 +25,12 @@ public class ExpireList<T> {
     public boolean remove(T t) {
         if(!contains(t)) return false;
 
-        cache.put(t, (byte) 1);
+        cache.invalidate(t);
         return true;
+    }
+
+    public void clear() {
+        cache.invalidateAll();
     }
 
     public void addIgnoreIfContains(T t) {

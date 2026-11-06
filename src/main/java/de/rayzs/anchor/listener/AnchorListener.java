@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 public class AnchorListener implements Listener {
 
     private final ExpireCache<Player, BlockFace> playerBlockFaceMap = new ExpireCache<>(250, TimeUnit.MILLISECONDS);
-    private final ExpireList<Player> playerDoubleSneak = new ExpireList<>(250, TimeUnit.MILLISECONDS);
 
 
     private final AnchorManager manager;
@@ -162,14 +161,6 @@ public class AnchorListener implements Listener {
         final Player player = event.getPlayer();
 
         if (!this.manager.hasSession(player)) return;
-
-/*
-        if (!player.isSneaking() && !playerDoubleSneak.contains(player)) {
-            playerDoubleSneak.add(player);
-            return;
-        }
-
-*/
         if (!player.isSneaking()) return;
 
 

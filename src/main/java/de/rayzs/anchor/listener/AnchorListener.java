@@ -10,8 +10,10 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
@@ -161,14 +163,14 @@ public class AnchorListener implements Listener {
 
         if (!this.manager.hasSession(player)) return;
 
-
+/*
         if (!player.isSneaking() && !playerDoubleSneak.contains(player)) {
             playerDoubleSneak.add(player);
             return;
         }
 
-
-        if (player.isSneaking()) return;
+*/
+        if (!player.isSneaking()) return;
 
 
         final AnchorSession session = this.manager.remove(event.getPlayer());
@@ -221,6 +223,15 @@ public class AnchorListener implements Listener {
 
         if (session != null && session.getCurrentlyHookedBlock().equals(block)) {
             this.manager.destruct();
+        }
+    }
+
+    @EventHandler (priority = EventPriority.LOW)
+    public void onFallDamage(final EntityDamageEvent event) {
+        if (event.isCancelled()) return;
+
+        if (event.getCause() == EntityDamageEvent.DamageCause.FALL && event.getEntity() instanceof Player player) {
+            event.setDamage(this.manager.handleFallDamage(player, event.getFinalDamage()));
         }
     }
 

@@ -9,6 +9,9 @@
 #   anchor:jump_height = Jump height. Is set to 0.3 by default.
 mode: TYPE
 
+defaultJumpMultiplier: 0.3
+defaultJumpHeight: 0.6
+
 types:
   - "STONE_PICKAXE"
   - "GOLDEN_PICKAXE"

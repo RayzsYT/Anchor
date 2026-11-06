@@ -17,6 +17,7 @@ public class AnchorSettings {
     private final NamespacedKey identifierKey = new NamespacedKey("anchor", "identifier");
     private final NamespacedKey jumpMultiplierKey = new NamespacedKey("anchor", "jump-multiplier");
 
+    private float defaultJumpMultiplier = 0.8f, defaultJumpHeight = 0.3f;
 
     private ModeType mode;
     private HashSet<String> typeList;
@@ -44,6 +45,10 @@ public class AnchorSettings {
         }
 
         this.typeList = new HashSet<>(config.getStringList("types"));
+
+
+        this.defaultJumpMultiplier = (float) config.getDouble("defaultJumpMultiplier");
+        this.defaultJumpHeight = (float) config.getDouble("defaultJumpHeight");
     }
 
 
@@ -64,13 +69,13 @@ public class AnchorSettings {
         if (!isValidItem(item)) return -999;
 
         final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.getOrDefault(this.jumpMultiplierKey, PersistentDataType.FLOAT, 0.8f);
+        return dataContainer.getOrDefault(this.jumpMultiplierKey, PersistentDataType.FLOAT, this.defaultJumpMultiplier);
     }
 
     public float readJumpHeight(final ItemStack item) {
         if (!isValidItem(item)) return -999;
 
         final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.getOrDefault(this.jumpMultiplierKey, PersistentDataType.FLOAT, 0.3f);
+        return dataContainer.getOrDefault(this.jumpMultiplierKey, PersistentDataType.FLOAT, this.defaultJumpHeight);
     }
 }

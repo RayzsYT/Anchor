@@ -15,7 +15,8 @@ public class AnchorSettings {
 
 
     private final NamespacedKey identifierKey = new NamespacedKey("anchor", "identifier");
-    private final NamespacedKey jumpMultiplierKey = new NamespacedKey("anchor", "jump-multiplier");
+    private final NamespacedKey jumpMultiplierKey = new NamespacedKey("anchor", "jump_multiplier");
+    private final NamespacedKey jumpHeightKey = new NamespacedKey("anchor", "jump_height");
 
     private float defaultJumpMultiplier = 0.8f, defaultJumpHeight = 0.3f;
 
@@ -76,6 +77,6 @@ public class AnchorSettings {
         if (!isValidItem(item)) return -999;
 
         final PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-        return dataContainer.getOrDefault(this.jumpMultiplierKey, PersistentDataType.FLOAT, this.defaultJumpHeight);
+        return dataContainer.getOrDefault(this.jumpHeightKey, PersistentDataType.FLOAT, this.defaultJumpHeight);
     }
 }
